@@ -7,7 +7,6 @@ A comprehensive system for detecting fraudulent insurance claims and false claim
 - Rule-based fraud detection
 - Machine learning model for fraud prediction
 - API endpoints for real-time claim analysis
-- PDF claim processing
 - Comprehensive test suite
 - Detailed fraud analysis reports
 
@@ -16,7 +15,7 @@ A comprehensive system for detecting fraudulent insurance claims and false claim
 1. Clone the repository:
 
 ```bash
-git clone https://github.com/yourusername/insurance-fraud-detection.git
+git clone https://github.com/medha0618nair/insurance-fraud-detection.git
 cd insurance-fraud-detection
 ```
 
@@ -38,7 +37,7 @@ pip install -r requirements.txt
 ### Running the API Server
 
 ```bash
-python app.py
+python api.py
 ```
 
 ### Running Tests
@@ -55,13 +54,46 @@ python process_insurance_data.py
 
 ## API Endpoints
 
-- `POST /upload`: Upload PDF claims
-- `POST /analyze`: Analyze a single claim
-- `POST /batch_analyze`: Analyze multiple claims
+### Single Claim Analysis
+
+- **Endpoint**: `POST /analyze`
+- **Description**: Analyze a single insurance claim for fraud
+- **Request Body**:
+
+```json
+{
+  "claim_amount": 5000,
+  "premium_amount": 1000,
+  "days_to_loss": 175,
+  "incident_hour": 16,
+  "risk_segmentation": "L",
+  "incident_severity": "Minor Loss",
+  "police_report_available": true
+}
+```
+
+- **Response**:
+
+```json
+{
+  "status": "success",
+  "fraud_detected": false,
+  "fraud_probability": 0.23,
+  "suspicious_score": 0,
+  "risk_level": "Low"
+}
+```
+
+### Batch Analysis
+
+- **Endpoint**: `POST /batch_analyze`
+- **Description**: Analyze multiple insurance claims for fraud
+- **Request Body**: Array of claim objects (same structure as single claim)
+- **Response**: Array of analysis results for each claim
 
 ## Project Structure
 
-- `app.py`: Main API server
+- `api.py`: Main API server
 - `process_insurance_data.py`: Data processing and model training
 - `test_fraud_detection.py`: Test suite
 - `requirements.txt`: Project dependencies
