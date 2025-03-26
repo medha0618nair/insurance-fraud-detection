@@ -2,8 +2,8 @@ services:
   - type: web
     name: insurance-fraud-detection
     env: python
-    buildCommand: pip install -r requirements.txt
+    buildCommand: chmod +x build.sh && ./build.sh
     startCommand: gunicorn api:app
     envVars:
       - key: PYTHON_VERSION
-        value: 3.9.13
+        value: 3.11.0
