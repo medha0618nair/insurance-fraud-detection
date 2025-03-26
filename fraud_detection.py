@@ -135,18 +135,17 @@ class FraudDetectionSystem:
             return True
         return False
 
-    def load_model(self, model_path='fraud_detection_model.joblib', preprocessor_path='fraud_detection_preprocessor.joblib'):
-        """
-        Load a trained model and preprocessor
-        """
+    def load_model(self):
+        """Load the trained model and preprocessor"""
         try:
-            self.model = joblib.load(model_path)
-            self.preprocessor = joblib.load(preprocessor_path)
-            self.is_trained = True
-            return True
+            self.model = joblib.load('fraud_detection_model.joblib')
+            self.preprocessor = joblib.load('fraud_detection_preprocessor.joblib')
+            print("Model and preprocessor loaded successfully")
         except Exception as e:
-            print(f"Error loading model: {str(e)}")
-            return False
+            print(f"Warning: Could not load model files: {str(e)}")
+            print("Falling back to rule-based detection only")
+            self.model = None
+            self.preprocessor = None
 
     def analyze_fraud_indicators(self, df):
         """
