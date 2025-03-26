@@ -23,6 +23,8 @@ wheels/
 
 # Virtual Environment
 venv/
+venv_new/
+.venv/
 ENV/
 
 # IDE
@@ -39,4 +41,13 @@ ENV/
 .DS_Store
 
 # Logs
-*.log 
+*.log
+
+# Local development
+.env
+.env.local
+.env.*.local
+
+# Keep model files
+!fraud_detection_model.joblib
+!fraud_detection_preprocessor.joblib 

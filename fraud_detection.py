@@ -173,3 +173,84 @@ class FraudDetectionSystem:
                 insights['indicators'][col] = fraud_cases[col].value_counts(normalize=True).to_dict()
         
         return insights 
+
+def create_fraud_flags(df):
+    """Create fraud flags based on business rules"""
+    df = df.copy()
+    
+    # Calculate suspicious score
+    df['suspicious_score'] = 0
+    
+    # High claim amount
+    if 'claim_amount' in df.columns:
+        df.loc[df['claim_amount'] > 50000, 'suspicious_score'] += 1
+    
+    # High claim to premium ratio
+    if 'premium_amount' in df.columns and 'claim_amount' in df.columns:
+        df['claim_premium_ratio'] = df['claim_amount'] / df['premium_amount']
+        df.loc[df['claim_premium_ratio'] > 10, 'suspicious_score'] += 1
+    
+    # Quick claim after policy start
+    if 'days_to_loss' in df.columns:
+        df.loc[df['days_to_loss'] < 30, 'suspicious_score'] += 1
+    
+    # Late night incidents
+    if 'incident_hour' in df.columns:
+        df.loc[df['incident_hour'].between(23, 4), 'suspicious_score'] += 1
+    
+    # Missing police report
+    if 'police_report_available' in df.columns:
+        df.loc[~df['police_report_available'], 'suspicious_score'] += 1
+    
+    # Risk segmentation
+    if 'risk_segmentation' in df.columns:
+        df.loc[df['risk_segmentation'] == 'H', 'suspicious_score'] += 1
+    
+    # Set fraud flag based on suspicious score
+    df['fraud_detected'] = df['suspicious_score'] >= 2
+    
+    # Add risk level
+    df['risk_level'] = pd.cut(df['suspicious_score'], 
+                             bins=[-np.inf, 1, 2, np.inf],
+                             labels=['Low', 'Medium', 'High'])
+    
+    return df
+
+def detect_fraud(data):
+    """
+    Detect fraud in insurance claims
+    
+    Parameters:
+    data (pd.DataFrame): DataFrame containing claim information
+    
+    Returns:
+    pd.DataFrame: DataFrame with fraud detection results
+    """
+    # Convert to DataFrame if single claim
+    if not isinstance(data, pd.DataFrame):
+        data = pd.DataFrame([data])
+    
+    # Ensure all column names are lowercase
+    data.columns = data.columns.str.lower()
+    
+    # Create fraud flags
+    results = create_fraud_flags(data)
+    
+    # Load the model if available
+    try:
+        model = joblib.load('fraud_detection_model.joblib')
+        preprocessor = joblib.load('fraud_detection_preprocessor.joblib')
+        
+        # Prepare features
+        X = results[['claim_amount', 'premium_amount', 'days_to_loss', 
+                    'incident_hour', 'risk_segmentation', 'incident_severity']]
+        
+        # Make predictions
+        probabilities = model.predict_proba(X)
+        results['fraud_probability'] = probabilities[:, 1]
+        
+    except Exception as e:
+        # If model is not available, use only rule-based detection
+        results['fraud_probability'] = results['suspicious_score'] / 5.0
+    
+    return results 
