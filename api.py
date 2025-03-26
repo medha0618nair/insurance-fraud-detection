@@ -1,14 +1,50 @@
 from flask import Flask, request, jsonify
+from flask_cors import CORS
 from fraud_detection import detect_fraud
 import pandas as pd
 import numpy as np
+import os
+from dotenv import load_dotenv
+
+# Load environment variables
+load_dotenv()
 
 app = Flask(__name__)
+CORS(app)  # Enable CORS for all routes
+
+# Basic security middleware
+@app.before_request
+def validate_request():
+    # Add your security checks here
+    if request.method == 'POST':
+        if not request.is_json:
+            return jsonify({
+                'status': 'error',
+                'message': 'Content-Type must be application/json'
+            }), 400
+
+@app.route('/health', methods=['GET'])
+def health_check():
+    """Health check endpoint"""
+    return jsonify({
+        'status': 'healthy',
+        'version': '1.0.0'
+    })
 
 @app.route('/analyze', methods=['POST'])
 def analyze_claim():
     try:
         data = request.get_json()
+        
+        # Validate required fields
+        required_fields = ['claim_amount', 'premium_amount', 'days_to_loss', 
+                         'incident_hour', 'risk_segmentation', 'incident_severity']
+        for field in required_fields:
+            if field not in data:
+                return jsonify({
+                    'status': 'error',
+                    'message': f'Missing required field: {field}'
+                }), 400
         
         # Convert input data to DataFrame
         df = pd.DataFrame([data])
@@ -34,6 +70,12 @@ def analyze_claim():
 def batch_analyze():
     try:
         data = request.get_json()
+        
+        if not isinstance(data, list):
+            return jsonify({
+                'status': 'error',
+                'message': 'Request body must be an array of claims'
+            }), 400
         
         # Convert input data to DataFrame
         df = pd.DataFrame(data)
@@ -64,4 +106,5 @@ def batch_analyze():
         }), 400
 
 if __name__ == '__main__':
-    app.run(debug=True) 
+    port = int(os.environ.get('PORT', 5000))
+    app.run(host='0.0.0.0', port=port) 
